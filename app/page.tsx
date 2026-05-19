@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type HabitKey = "steps" | "water" | "calories" | "exercise" | "screenFree";
 
 type DayState = Record<HabitKey, boolean>;
+type AppState = Record<string, DayState>;
 
 const initialState: DayState = {
   steps: false,
@@ -13,6 +14,8 @@ const initialState: DayState = {
   exercise: false,
   screenFree: false,
 };
+
+const STORAGE_KEY = "pulse-state-v2";
 
 const habits: {
   key: HabitKey;
@@ -47,53 +50,119 @@ const habits: {
   },
 ];
 
-export default function PulseMVP() {
-  const [date, setDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
-  );
+function getToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
 
-  const [state, setState] = useState<DayState>(initialState);
+export default function PulseMVP() {
+  const [date, setDate] = useState(getToday);
+
+  const [allState, setAllState] = useState<AppState>({});
+  const [hydrated, setHydrated] = useState(false);
+
+  // hydrate from storage AFTER mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      setAllState(parsed);
+    } catch {
+      setAllState({});
+    } finally {
+      setHydrated(true);
+    }
+  }, []);
+
+  // persist changes
+  useEffect(() => {
+    if (!hydrated) return;
+
+    try {
+      const serialized = JSON.stringify(allState);
+      localStorage.setItem(STORAGE_KEY, serialized);
+      sessionStorage.setItem(STORAGE_KEY, serialized);
+    } catch {}
+  }, [allState, hydrated]);
+
+  const dayState: DayState = useMemo(() => {
+    return {
+      ...initialState,
+      ...(allState[date] || {}),
+    };
+  }, [allState, date]);
 
   const toggle = (key: HabitKey) => {
-    setState((prev) => ({ ...prev, [key]: !prev[key] }));
+    setAllState((prev) => {
+      const current = prev[date] || initialState;
+
+      return {
+        ...prev,
+        [date]: {
+          ...current,
+          [key]: !current[key],
+        },
+      };
+    });
   };
 
-  const completed = Object.values(state).filter(Boolean).length;
+  const changeDay = (offset: number) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + offset);
+    setDate(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+        d.getDate(),
+      ).padStart(2, "0")}`,
+    );
+  };
+
+  const completed = Object.values(dayState).filter(Boolean).length;
+
+  // 🔥 hydration guard (prevents mismatch)
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-fuchsia-50">
+        <div className="text-sm text-gray-400">Loading…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-fuchsia-50 flex justify-center px-4 py-6">
-      <div className="w-full max-w-sm relative">
-        {/* Top Bar */}
-        <div className="flex items-center text-center justify-center mb-4">
+      <div className="w-full max-w-sm">
+        {/* Header */}
+        <div className="flex items-center justify-center mb-4">
           <h1 className="text-4xl font-bold">Pulse</h1>
         </div>
 
         {/* Date Switcher */}
-        <div className="mb-6 flex items-center justify-center">
-          <div className="flex items-center gap-6">
-            {/* Left button */}
-            <button className="text-2xl text-purple-400 hover:text-gray-600 transition">
-              ‹
-            </button>
+        <div className="mb-6 flex items-center justify-center gap-6">
+          <button
+            onClick={() => changeDay(-1)}
+            className="text-2xl text-purple-400"
+          >
+            ‹
+          </button>
 
-            {/* Date block */}
-            <div className="text-center leading-tight">
-              <div className="text-lg font-medium text-purple-700">
-                {new Date(date).toLocaleDateString(undefined, {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </div>
-
-              <div className="text-xs text-stone-400 mt-1">Today</div>
+          <div className="text-center">
+            <div className="text-lg font-medium text-purple-700">
+              {new Date(date).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
             </div>
-
-            {/* Right button */}
-            <button className="text-2xl text-purple-400 hover:text-gray-600 transition">
-              ›
-            </button>
+            <div className="text-xs text-stone-400">Daily view</div>
           </div>
+
+          <button
+            onClick={() => changeDay(1)}
+            className="text-2xl text-purple-400"
+          >
+            ›
+          </button>
         </div>
 
         {/* Progress */}
@@ -101,33 +170,30 @@ export default function PulseMVP() {
           {completed}/5 completed
         </div>
 
-        {/* Habit Cards */}
+        {/* Habits */}
         <div className="space-y-3">
           {habits.map((h) => (
             <button
               key={h.key}
               onClick={() => toggle(h.key)}
-              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-4  active:scale-[0.99] transition"
+              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-4"
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center ${h.color}`}
                 >
-                  <span className="text-lg">{h.emoji}</span>
+                  <span>{h.emoji}</span>
                 </div>
 
                 <span className="text-sm font-medium">{h.label}</span>
               </div>
 
               <div
-                className={`w-6 h-6 rounded-md border flex items-center justify-center transition
-                ${
-                  state[h.key]
-                    ? "bg-black border-black"
-                    : "border-gray-300 bg-white"
+                className={`w-6 h-6 rounded-md border flex items-center justify-center ${
+                  dayState[h.key] ? "bg-black border-black" : "border-gray-300"
                 }`}
               >
-                {state[h.key] && (
+                {dayState[h.key] && (
                   <svg
                     viewBox="0 0 24 24"
                     className="w-4 h-4 text-white"
