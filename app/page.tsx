@@ -68,6 +68,7 @@ export default function PulseMVP() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : {};
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAllState(parsed);
     } catch {
       setAllState({});
