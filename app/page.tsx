@@ -178,7 +178,7 @@ export default function PulseMVP() {
 
         {/* Progress */}
         <div className="text-xs text-gray-500 mb-3 select-none">
-          {completed}/5 completed
+          {completed} / 5 completed
         </div>
 
         {/* Habits */}
