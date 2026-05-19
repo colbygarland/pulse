@@ -7,6 +7,16 @@ type HabitKey = "steps" | "water" | "calories" | "exercise" | "screenFree";
 type DayState = Record<HabitKey, boolean>;
 type AppState = Record<string, DayState>;
 
+// TypeScript interface for the native PWA install prompt event
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: Array<string>;
+  readonly userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
 const initialState: DayState = {
   steps: false,
   water: false,
@@ -74,6 +84,11 @@ export default function PulseMVP() {
   const [hydrated, setHydrated] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // PWA Installation state
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+
   // Listen to device settings and hydrate from storage AFTER mount
   useEffect(() => {
     // 1. Check system dark mode preference
@@ -95,7 +110,19 @@ export default function PulseMVP() {
       setHydrated(true);
     }
 
-    return () => mediaQuery.removeEventListener("change", listener);
+    // 3. Listen for the native PWA install prompt
+    const handleInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setShowInstallBtn(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
+
+    return () => {
+      mediaQuery.removeEventListener("change", listener);
+      window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+    };
   }, []);
 
   // persist changes
@@ -143,6 +170,18 @@ export default function PulseMVP() {
     setDate(newDate);
   };
 
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    await deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === "accepted") {
+      setDeferredPrompt(null);
+      setShowInstallBtn(false);
+    }
+  };
+
   const completed = Object.values(dayState).filter(Boolean).length;
 
   if (!hydrated) {
@@ -160,7 +199,7 @@ export default function PulseMVP() {
     <div
       className={`h-screen w-screen overflow-hidden overscroll-none touch-none bg-fuchsia-50 flex flex-col items-center px-4 py-6 justify-center transition-colors duration-200 ${isDarkMode ? "dark bg-zinc-950" : ""}`}
     >
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm relative">
         {/* Header */}
         <div className="flex items-center justify-center mb-4">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-zinc-50">
@@ -246,6 +285,32 @@ export default function PulseMVP() {
           ))}
         </div>
       </div>
+
+      {/* Floating Install Button - Bottom Right */}
+      {showInstallBtn && (
+        <button
+          onClick={handleInstallClick}
+          title="Install to Home Screen"
+          className="fixed bottom-6 right-6 p-4 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 text-white rounded-full shadow-lg transition-all active:scale-95 flex items-center justify-center z-50 group hover:pr-5"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth="2.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 4.5v15m7.5-7.5h-15"
+            />
+          </svg>
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs group-hover:ml-2 transition-all duration-300 text-sm font-medium">
+            Install App
+          </span>
+        </button>
+      )}
     </div>
   );
 }
