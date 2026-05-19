@@ -109,13 +109,17 @@ export default function PulseMVP() {
   };
 
   const changeDay = (offset: number) => {
-    const d = new Date(date);
+    const [year, month, day] = date.split("-").map(Number);
+
+    const d = new Date(year, month - 1, day); // local date, no UTC shift
     d.setDate(d.getDate() + offset);
-    setDate(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-        d.getDate(),
-      ).padStart(2, "0")}`,
-    );
+
+    const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}-${String(d.getDate()).padStart(2, "0")}`;
+
+    setDate(newDate);
   };
 
   const completed = Object.values(dayState).filter(Boolean).length;
