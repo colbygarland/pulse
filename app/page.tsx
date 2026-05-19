@@ -95,6 +95,12 @@ export default function PulseMVP() {
     };
   }, [allState, date]);
 
+  // Safely parse the YYYY-MM-DD string into a true local Date object
+  const displayDate = useMemo(() => {
+    const [year, month, day] = date.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }, [date]);
+
   const toggle = (key: HabitKey) => {
     setAllState((prev) => {
       const current = prev[date] || initialState;
@@ -125,7 +131,7 @@ export default function PulseMVP() {
 
   const completed = Object.values(dayState).filter(Boolean).length;
 
-  // 🔥 hydration guard (prevents mismatch)
+  // Hydration guard (prevents mismatch)
   if (!hydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-fuchsia-50">
@@ -153,7 +159,7 @@ export default function PulseMVP() {
 
           <div className="text-center">
             <div className="text-lg font-medium text-purple-700">
-              {new Date(date).toLocaleDateString(undefined, {
+              {displayDate.toLocaleDateString(undefined, {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
