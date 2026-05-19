@@ -134,30 +134,30 @@ export default function PulseMVP() {
   // Hydration guard (prevents mismatch)
   if (!hydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-fuchsia-50">
+      <div className="h-screen w-screen overflow-hidden flex items-center justify-center bg-fuchsia-50">
         <div className="text-sm text-gray-400">Loading…</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-fuchsia-50 flex justify-center px-4 py-6">
+    <div className="h-screen w-screen overflow-hidden overscroll-none touch-none bg-fuchsia-50 flex flex-col items-center px-4 py-6 justify-center">
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="flex items-center justify-center mb-4">
-          <h1 className="text-4xl font-bold">Pulse</h1>
+          <h1 className="text-5xl font-bold">Pulse</h1>
         </div>
 
         {/* Date Switcher */}
         <div className="mb-6 flex items-center justify-center gap-6">
           <button
             onClick={() => changeDay(-1)}
-            className="text-2xl text-purple-400"
+            className="text-4xl text-purple-400 p-2"
           >
             ‹
           </button>
 
-          <div className="text-center">
+          <div className="text-center select-none">
             <div className="text-lg font-medium text-purple-700">
               {displayDate.toLocaleDateString(undefined, {
                 month: "long",
@@ -170,14 +170,14 @@ export default function PulseMVP() {
 
           <button
             onClick={() => changeDay(1)}
-            className="text-2xl text-purple-400"
+            className="text-4xl text-purple-400 p-2"
           >
             ›
           </button>
         </div>
 
         {/* Progress */}
-        <div className="text-xs text-gray-500 mb-3">
+        <div className="text-xs text-gray-500 mb-3 select-none">
           {completed}/5 completed
         </div>
 
@@ -187,7 +187,7 @@ export default function PulseMVP() {
             <button
               key={h.key}
               onClick={() => toggle(h.key)}
-              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-4"
+              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-4  active:scale-[0.99] transition-transform"
             >
               <div className="flex items-center gap-3">
                 <div
