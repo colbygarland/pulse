@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { showConfetti } from "./confetti";
 
 type HabitKey = "steps" | "water" | "calories" | "exercise" | "screenFree";
 
@@ -151,12 +152,27 @@ export default function PulseMVP() {
   const toggle = (key: HabitKey) => {
     setAllState((prev) => {
       const current = prev[date] || initialState;
+      const updatedDayState = {
+        ...current,
+        [key]: !current[key],
+      };
+
+      // 1. Calculate how many are completed in this specific update
+      const totalCompleted =
+        Object.values(updatedDayState).filter(Boolean).length;
+
+      // 2. Fire confetti if they just hit a perfect 5/5
+      if (totalCompleted === 5) {
+        try {
+          showConfetti();
+        } catch (error) {
+          console.error("Failed to run showConfetti:", error);
+        }
+      }
+
       return {
         ...prev,
-        [date]: {
-          ...current,
-          [key]: !current[key],
-        },
+        [date]: updatedDayState,
       };
     });
   };
