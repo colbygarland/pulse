@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #faf8f3;
   --foreground: #171717;
+  --tile-bg: #ffffff;
 
-  /* add this */
   --font-sans: var(--font-nunito);
 }
 
@@ -12,21 +12,68 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* now Tailwind uses Nunito */
   --font-sans: var(--font-nunito);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #0c0c12;
     --foreground: #ededed;
   }
+}
+
+.dark {
+  --tile-bg: #1e1e2a;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-
-  /* important change */
   font-family: var(--font-nunito);
+}
+
+/* â”€â”€â”€â”€â”€ Pulse animations â”€â”€â”€â”€â”€ */
+@keyframes pulseCheck {
+  from {
+    stroke-dashoffset: 30;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes pulseShine {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes streakPop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.18) rotate(-4deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+@keyframes bannerIn {
+  from {
+    transform: translate(-50%, -16px) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fadeSwap {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
