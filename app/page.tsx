@@ -333,8 +333,8 @@ function HabitTile({
   onToggle: (k: HabitKey, x: number, y: number, color: string) => void;
 }) {
   const baseShadow = done
-    ? `0 10px 24px ${habit.color}55, inset 0 2px 0 rgba(255,255,255,0.18)`
-    : `0 1px 0 rgba(0,0,0,0.04), 0 8px 22px rgba(20,18,30,0.06)`;
+    ? `inset 0 2px 0 rgba(255,255,255,0.18)`
+    : `none`;
 
   return (
     <button
